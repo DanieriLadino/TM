@@ -6,6 +6,7 @@ import platform
 
 st.write("Versión de Python:", platform.python_version())
 
+# Cargar el modelo una sola vez (así la app no se pone lenta)
 @st.cache_resource
 def cargar_modelo():
     return load_model('keras_model.h5', compile=False)
@@ -24,6 +25,7 @@ img_file_buffer = st.camera_input("Toma una Foto")
 if img_file_buffer is not None:
     data = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
 
+    # Leer la foto y dejarla en 224x224 como la espera el modelo
     img = Image.open(img_file_buffer).convert("RGB")
     img = ImageOps.fit(img, (224, 224), Image.Resampling.LANCZOS)
 
@@ -31,12 +33,16 @@ if img_file_buffer is not None:
     normalized_image_array = (img_array.astype(np.float32) / 127.5) - 1
     data[0] = normalized_image_array
 
+    # Predicción
     prediction = model.predict(data)
     prob_arriba = prediction[0][0]
     prob_abajo = prediction[0][1]
 
     if prob_arriba > 0.5:
-        st.header("pulgar arriba")
-        st.image('pulgar_arriba.jpg', width=350)
+        st.header("ok pulgar arriba detectado con éxito")
+        st.image('pulgar_arriba.jpg', width=350)   # esta es la imagen que aparece
     elif prob_abajo > 0.5:
-        st.header("pulgar abajo")
+        st.header("pulgar abajo detectado con éxito")
+        # aquí no se muestra ninguna imagen
+    else:
+        st.write("No estoy seguro, intenta con otra foto.")
