@@ -5,8 +5,19 @@ from keras.models import load_model
 import platform
 import time
 from datetime import datetime
+from pathlib import Path
 
 st.set_page_config(page_title="Reconocimiento de Imágenes", page_icon="👍")
+
+# Carpeta donde está este archivo (para encontrar las imágenes siempre)
+CARPETA = Path(__file__).parent
+
+def buscar_imagen(nombre_base):
+    for extension in [".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG"]:
+        ruta = CARPETA / (nombre_base + extension)
+        if ruta.exists():
+            return str(ruta)
+    return None
 
 # ---------- ESTILOS Y ANIMACIONES ----------
 st.markdown("""
@@ -25,6 +36,11 @@ st.markdown("""
     font-size: 80px;
     display: inline-block;
     animation: salto 1s ease infinite;
+}
+.trofeo {
+    font-size: 140px;
+    text-align: center;
+    animation: salto 1.2s ease infinite;
 }
 .texto-brillo {
     font-size: 26px;
@@ -101,13 +117,14 @@ st.write("Versión de Python:", platform.python_version())
 # Cargar el modelo una sola vez (así la app no se pone lenta)
 @st.cache_resource
 def cargar_modelo():
-    return load_model('keras_model.h5', compile=False)
+    return load_model(str(CARPETA / 'keras_model.h5'), compile=False)
 
 model = cargar_modelo()
 
 st.title("Reconocimiento de Imágenes")
-image = Image.open('OIG5.jpg')
-st.image(image, width=350)
+imagen_portada = buscar_imagen("OIG5")
+if imagen_portada:
+    st.image(imagen_portada, width=350)
 
 with st.sidebar:
     st.subheader("Usando un modelo entrenado en Teachable Machine puedes usarlo en esta app para identificar")
@@ -156,7 +173,13 @@ if img_file_buffer is not None:
             '<p>ya puedes hacer tu registro ✨</p></div>',
             unsafe_allow_html=True
         )
-        st.image('pulgar_arriba.jpg', width=350)   # esta es la imagen que aparece
+
+        # Imagen de pulgar arriba (si no existe, sale un trofeo animado)
+        imagen_arriba = buscar_imagen("pulgar_arriba")
+        if imagen_arriba:
+            st.image(imagen_arriba, width=350)
+        else:
+            st.markdown('<div class="trofeo">🏆</div>', unsafe_allow_html=True)
 
         st.subheader("📝 registro")
         with st.form("form_registro", clear_on_submit=True):
