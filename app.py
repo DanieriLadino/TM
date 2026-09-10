@@ -3,46 +3,49 @@ import numpy as np
 from PIL import Image, ImageOps
 from keras.models import load_model
 import platform
+import time
+from datetime import datetime
 
-st.write("Versión de Python:", platform.python_version())
+st.set_page_config(page_title="Reconocimiento de Imágenes", page_icon="👍")
 
-# Cargar el modelo una sola vez (así la app no se pone lenta)
-@st.cache_resource
-def cargar_modelo():
-    return load_model('keras_model.h5', compile=False)
-
-model = cargar_modelo()
-
-st.title("Reconocimiento de Imágenes")
-image = Image.open('OIG5.jpg')
-st.image(image, width=350)
-
-with st.sidebar:
-    st.subheader("Usando un modelo entrenado en Teachable Machine puedes usarlo en esta app para identificar")
-
-img_file_buffer = st.camera_input("Toma una Foto")
-
-if img_file_buffer is not None:
-    data = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
-
-    # Leer la foto y dejarla en 224x224 como la espera el modelo
-    img = Image.open(img_file_buffer).convert("RGB")
-    img = ImageOps.fit(img, (224, 224), Image.Resampling.LANCZOS)
-
-    img_array = np.asarray(img)
-    normalized_image_array = (img_array.astype(np.float32) / 127.5) - 1
-    data[0] = normalized_image_array
-
-    # Predicción
-    prediction = model.predict(data)
-    prob_arriba = prediction[0][0]
-    prob_abajo = prediction[0][1]
-
-    if prob_arriba > 0.5:
-        st.header("ok pulgar arriba detectado con éxito")
-        st.image('pulgar_arriba.jpg', width=350)   # esta es la imagen que aparece
-    elif prob_abajo > 0.5:
-        st.header("pulgar abajo detectado con éxito")
-        # aquí no se muestra ninguna imagen
-    else:
-        st.write("No estoy seguro, intenta con otra foto.")
+# ---------- ESTILOS Y ANIMACIONES ----------
+st.markdown("""
+<style>
+.caja-feliz {
+    background: linear-gradient(270deg, #00c9ff, #92fe9d, #f9d423, #ff4e50);
+    background-size: 800% 800%;
+    animation: fondoMovil 6s ease infinite, pulso 2s ease-in-out infinite;
+    border-radius: 20px;
+    padding: 25px;
+    text-align: center;
+    color: white;
+    margin-bottom: 20px;
+}
+.emoji-salto {
+    font-size: 80px;
+    display: inline-block;
+    animation: salto 1s ease infinite;
+}
+.texto-brillo {
+    font-size: 26px;
+    font-weight: bold;
+    animation: brillo 1.5s ease-in-out infinite alternate;
+}
+@keyframes fondoMovil {
+    0% {background-position: 0% 50%}
+    50% {background-position: 100% 50%}
+    100% {background-position: 0% 50%}
+}
+@keyframes pulso {
+    0%, 100% {box-shadow: 0 0 10px rgba(146, 254, 157, 0.5)}
+    50% {box-shadow: 0 0 35px rgba(146, 254, 157, 1)}
+}
+@keyframes salto {
+    0%, 100% {transform: translateY(0) rotate(0deg)}
+    50% {transform: translateY(-25px) rotate(-15deg)}
+}
+@keyframes brillo {
+    from {text-shadow: 0 0 5px #fff}
+    to {text-shadow: 0 0 20px #fff, 0 0 30px #ff00de}
+}
+.caja-trist
