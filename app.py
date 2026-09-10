@@ -1,50 +1,42 @@
 import streamlit as st
-import cv2
 import numpy as np
-#from PIL import Image
-from PIL import Image as Image, ImageOps as ImagOps
+from PIL import Image, ImageOps
 from keras.models import load_model
-
 import platform
 
-# Muestra la versión de Python junto con detalles adicionales
 st.write("Versión de Python:", platform.python_version())
 
-model = load_model('keras_model.h5')
-data = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
+@st.cache_resource
+def cargar_modelo():
+    return load_model('keras_model.h5', compile=False)
+
+model = cargar_modelo()
 
 st.title("Reconocimiento de Imágenes")
-#st.write("Versión de Python:", platform.python_version())
 image = Image.open('OIG5.jpg')
 st.image(image, width=350)
+
 with st.sidebar:
-    st.subheader("Usando un modelo entrenado en teachable Machine puedes Usarlo en esta app para identificar")
+    st.subheader("Usando un modelo entrenado en Teachable Machine puedes usarlo en esta app para identificar")
+
 img_file_buffer = st.camera_input("Toma una Foto")
 
 if img_file_buffer is not None:
-    # To read image file buffer with OpenCV:
     data = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
-   #To read image file buffer as a PIL Image:
-    img = Image.open(img_file_buffer)
 
-    newsize = (224, 224)
-    img = img.resize(newsize)
-    # To convert PIL Image to numpy array:
-    img_array = np.array(img)
+    img = Image.open(img_file_buffer).convert("RGB")
+    img = ImageOps.fit(img, (224, 224), Image.Resampling.LANCZOS)
 
-    # Normalize the image
-    normalized_image_array = (img_array.astype(np.float32) / 127.0) - 1
-    # Load the image into the array
+    img_array = np.asarray(img)
+    normalized_image_array = (img_array.astype(np.float32) / 127.5) - 1
     data[0] = normalized_image_array
 
-    # run the inference
     prediction = model.predict(data)
-    print(prediction)
-    if prediction[0][0]>0.5:
-      st.header('Izquierda, con Probabilidad: '+str( prediction[0][0]) )
-    if prediction[0][1]>0.5:
-      st.header('Arriba, con Probabilidad: '+str( prediction[0][1]))
-    #if prediction[0][2]>0.5:
-    # st.header('Derecha, con Probabilidad: '+str( prediction[0][2]))
+    prob_arriba = prediction[0][0]
+    prob_abajo = prediction[0][1]
 
-
+    if prob_arriba > 0.5:
+        st.header("pulgar arriba")
+        st.image('pulgar_arriba.jpg', width=350)
+    elif prob_abajo > 0.5:
+        st.header("pulgar abajo")
